@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nova Calculator</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+    background:#080b12;
+    color:#fff;
+    font-family:Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+}
+.app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    background:linear-gradient(180deg,#101621,#080b12);
+    padding:15px;
+}
+.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 3px 15px;
+}
+.title{
+    font-size:21px;
+    font-weight:bold;
+}
+.title span{color:#42dfff}
+.icon{
+    border:0;
+    width:42px;
+    height:42px;
+    border-radius:14px;
+    background:#1b2330;
+    color:#fff;
+    font-size:19px;
+}
+.display{
+    min-height:170px;
+    border-radius:25px;
+    padding:20px;
+    background:#111722;
+    box-shadow:inset 0 0 0 1px #202a38;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    text-align:right;
+    overflow:hidden;
+}
+.old{
+    color:#758196;
+    min-height:25px;
+    font-size:17px;
+    word-break:break-all;
+}
+.answer{
+    font-size:43px;
+    font-weight:bold;
+    margin-top:8px;
+    word-break:break-all;
+}
+.mode{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin:12px 0;
+}
+.mode button{
+    white-space:nowrap;
+    border:0;
+    padding:10px 15px;
+    border-radius:14px;
+    background:#171f2c;
+    color:#aebbd0;
+}
+.mode button.active{
+    background:#19475a;
+    color:#4de4ff;
+}
+.science{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:7px;
+    margin-bottom:10px;
+}
+.science button{
+    height:42px;
+    border:0;
+    border-radius:13px;
+    background:#151d29;
+    color:#8bdcec;
+    font-size:13px;
+}
+.keys{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:9px;
+}
+.keys button{
+    height:64px;
+    border:0;
+    border-radius:19px;
+    background:#1a222f;
+    color:#fff;
+    font-size:21px;
+    font-weight:bold;
+}
+.keys button:active,
+.science button:active{
+    transform:scale(.94);
+}
+.fn{color:#55ddf7!important;background:#202b39!important}
+.op{color:#61e7ff!important;background:#173443!important}
+.equal{
+    background:linear-gradient(135deg,#00b8d4,#6366f1)!important;
+}
+.drawer{
+    position:fixed;
+    top:0;
+    right:-100%;
+    width:min(380px,92%);
+    height:100vh;
+    background:#101621;
+    z-index:20;
+    padding:20px;
+    transition:.3s;
+    box-shadow:-20px 0 50px #000;
+}
+.drawer.open{right:0}
+.drawer-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+.drawer h2{font-size:20px}
+.close{
+    border:0;
+    background:#222c3a;
+    color:white;
+    width:38px;
+    height:38px;
+    border-radius:12px;
+}
+.history{
+    max-height:75vh;
+    overflow:auto;
+}
+.item{
+    background:#18202c;
+    padding:14px;
+    border-radius:15px;
+    margin-bottom:9px;
+}
+.item small{color:#738197}
+.item strong{
+    display:block;
+    margin-top:5px;
+    font-size:18px;
+}
+.clear{
+    width:100%;
+    height:48px;
+    border:0;
+    border-radius:14px;
+    background:#40202a;
+    color:#ff8095;
+}
+.graph{
+    display:none;
+    margin-top:10px;
+    padding:15px;
+    background:#111722;
+    border-radius:20px;
+}
+canvas{width:100%;height:240px}
+@media(max-width:360px){
+    .keys button{height:57px}
+    .answer{font-size:35px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="top">
+    <div class="title">NOVA <span>CALC</span></div>
+    <button class="icon" onclick="openHistory()">☷</button>
+</div>
+
+<div class="display">
+    <div class="old" id="old"></div>
+    <div class="answer" id="answer">0</div>
+</div>
+
+<div class="mode">
+    <button class="active" onclick="setMode('basic',this)">Basic</button>
+    <button onclick="setMode('scientific',this)">Scientific</button>
+    <button onclick="setMode('graph',this)">Graph</button>
+</div>
+
+<div class="science" id="science">
+    <button onclick="fn('sin')">sin</button>
+    <button onclick="fn('cos')">cos</button>
+    <button onclick="fn('tan')">tan</button>
+    <button onclick="fn('log')">log</button>
+    <button onclick="fn('ln')">ln</button>
+
+    <button onclick="fn('sqrt')">√</button>
+    <button onclick="fn('square')">x²</button>
+    <button onclick="insert('^')">xʸ</button>
+    <button onclick="insert('π')">π</button>
+    <button onclick="insert('e')">e</button>
+</div>
+
+<div class="keys">
+
+<button class="fn" onclick="clearCalc()">AC</button>
+<button class="fn" onclick="back()">⌫</button>
+<button class="fn" onclick="percent()">%</button>
+<button class="op" onclick="insert('/')">÷</button>
+
+<button onclick="insert('7')">7</button>
+<button onclick="insert('8')">8</button>
+<button onclick="insert('9')">9</button>
+<button class="op" onclick="insert('*')">×</button>
+
+<button onclick="insert('4')">4</button>
+<button onclick="insert('5')">5</button>
+<button onclick="insert('6')">6</button>
+<button class="op" onclick="insert('-')">−</button>
+
+<button onclick="insert('1')">1</button>
+<button onclick="insert('2')">2</button>
+<button onclick="insert('3')">3</button>
+<button class="op" onclick="insert('+')">+</button>
+
+<button onclick="insert('(')">(</button>
+<button onclick="insert('0')">0</button>
+<button onclick="insert('.')">.</button>
+<button onclick="insert(')')">)</button>
+
+<button class="fn" onclick="memory('MC')">MC</button>
+<button class="fn" onclick="memory('MR')">MR</button>
+<button class="fn" onclick="memory('M+')">M+</button>
+<button class="equal" onclick="calculate()">=</button>
+
+</div>
+
+<div class="graph" id="graphBox">
+    <canvas id="canvas"></canvas>
+</div>
+
+</div>
+
+<div class="drawer" id="drawer">
+
+<div class="drawer-head">
+    <h2>Calculation History</h2>
+    <button class="close" onclick="closeHistory()">×</button>
+</div>
+
+<div class="history" id="history"></div>
+
+<button class="clear" onclick="clearHistory()">
+    Clear History
+</button>
+
+</div>
+
+<script>
+
+let exp="";
+let memoryValue=0;
+let lastResult=0;
+
+const oldEl=document.getElementById("old");
+const ansEl=document.getElementById("answer");
+
+function display(){
+    oldEl.innerText=exp
+        .replaceAll("*","×")
+        .replaceAll("/","÷");
+
+    if(exp==="") ansEl.innerText="0";
+}
+
+function insert(v){
+
+    if(ansEl.innerText==="Error"){
+        exp="";
+    }
+
+    exp+=v;
+    display();
+}
+
+function clearCalc(){
+    exp="";
+    ansEl.innerText="0";
+    oldEl.innerText="";
+}
+
+function back(){
+    exp=exp.slice(0,-1);
+    display();
+}
+
+function percent(){
+
+    let m=exp.match(/(\d+\.?\d*)$/);
+
+    if(!m)return;
+
+    let n=parseFloat(m[1])/100;
+
+    exp=exp.slice(0,m.index)+n;
+    display();
+}
+
+function prepare(s){
+
+    s=s.replaceAll("π",Math.PI);
+    s=s.replaceAll("e",Math.E);
+    s=s.replaceAll("^","**");
+
+    return s;
+}
+
+function calculate(){
+
+    if(!exp)return;
+
+    try{
+
+        let original=exp;
+        let value=Function(
+            '"use strict";return ('+prepare(exp)+')'
+        )();
+
+        if(!Number.isFinite(value))
+            throw new Error();
+
+        value=Number(value.toFixed(12));
+
+        ansEl.innerText=value;
+        lastResult=value;
+
+        saveHistory(original,value);
+
+        exp=String(value);
+
+    }catch(e){
+
+        ansEl.innerText="Error";
+    }
+}
+
+function fn(type){
+
+    if(!exp)return;
+
+    try{
+
+        let value=Function(
+            '"use strict";return ('+prepare(exp)+')'
+        )();
+
+        let result;
+
+        if(type==="sin")
+            result=Math.sin(value*Math.PI/180);
+
+        if(type==="cos")
+            result=Math.cos(value*Math.PI/180);
+
+        if(type==="tan")
+            result=Math.tan(value*Math.PI/180);
+
+        if(type==="log")
+            result=Math.log10(value);
+
+        if(type==="ln")
+            result=Math.log(value);
+
+        if(type==="sqrt")
+            result=Math.sqrt(value);
+
+        if(type==="square")
+            result=value*value;
+
+        result=Number(result.toFixed(12));
+
+        ansEl.innerText=result;
+        lastResult=result;
+
+        saveHistory(type+"("+value+")",result);
+
+        exp=String(result);
+
+    }catch(e){
+
+        ansEl.innerText="Error";
+    }
+}
+
+/* MEMORY */
+
+function memory(type){
+
+    if(type==="MC"){
+        memoryValue=0;
+    }
+
+    if(type==="MR"){
+        exp+=String(memoryValue);
+        display();
+    }
+
+    if(type==="M+"){
+        try{
+            memoryValue+=Function(
+                '"use strict";return ('+prepare(exp)+')'
+            )();
+        }catch(e){}
+    }
+}
+
+/* HISTORY */
+
+function saveHistory(expression,result){
+
+    let list=
+        JSON.parse(localStorage.getItem("novaHistory")||"[]");
+
+    list.unshift({
+        exp:expression,
+        result:result,
+        date:new Date().toLocaleString()
+    });
+
+    list=list.slice(0,100);
+
+    localStorage.setItem(
+        "novaHistory",
+        JSON.stringify(list)
+    );
+}
+
+function loadHistory(){
+
+    let list=
+        JSON.parse(localStorage.getItem("novaHistory")||"[]");
+
+    let box=document.getElementById("history");
+
+    box.innerHTML="";
+
+    if(!list.length){
+        box.innerHTML=
+        '<p style="color:#758196">No history yet.</p>';
+        return;
+    }
+
+    list.forEach(x=>{
+
+        let div=document.createElement("div");
+
+        div.className="item";
+
+        div.innerHTML=
+        `<small>${x.date}</small>
+         <div>${x.exp}</div>
+         <strong>= ${x.result}</strong>`;
+
+        div.onclick=()=>{
+            exp=String(x.result);
+            display();
+            closeHistory();
+        };
+
+        box.appendChild(div);
+    });
+}
+
+function openHistory(){
+    document.getElementById("drawer")
+        .classList.add("open");
+    loadHistory();
+}
+
+function closeHistory(){
+    document.getElementById("drawer")
+        .classList.remove("open");
+}
+
+function clearHistory(){
+
+    localStorage.removeItem("novaHistory");
+    loadHistory();
+}
+
+/* MODE */
+
+function setMode(mode,button){
+
+    document.querySelectorAll(".mode button")
+        .forEach(x=>x.classList.remove("active"));
+
+    button.classList.add("active");
+
+    document.getElementById("science").style.display=
+        mode==="scientific" ? "grid" : "none";
+
+    document.getElementById("graphBox").style.display=
+        mode==="graph" ? "block" : "none";
+
+    if(mode==="graph"){
+        drawGraph();
+    }
+}
+
+/* GRAPH */
+
+function drawGraph(){
+
+    let canvas=document.getElementById("canvas");
+    let ctx=canvas.getContext("2d");
+
+    canvas.width=canvas.clientWidth*2;
+    canvas.height=240*2;
+
+    ctx.scale(2,2);
+
+    let w=canvas.clientWidth;
+    let h=240;
+
+    ctx.clearRect(0,0,w,h);
+
+    ctx.strokeStyle="#394455";
+    ctx.lineWidth=1;
+
+    ctx.beginPath();
+    ctx.moveTo(w/2,0);
+    ctx.lineTo(w/2,h);
+    ctx.moveTo(0,h/2);
+    ctx.lineTo(w,h/2);
+    ctx.stroke();
+
+    if(!exp)return;
+
+    ctx.strokeStyle="#42dfff";
+    ctx.lineWidth=2;
+
+    ctx.beginPath();
+
+    let started=false;
+
+    for(let px=0;px<w;px++){
+
+        let x=(px-w/2)/25;
+
+        try{
+
+            let expression=prepare(exp)
+                .replace(/x/g,"("+x+")");
+
+            let y=Function(
+                '"use strict";return ('+
+                expression+
+                ')'
+            )();
+
+            let py=h/2-y*25;
+
+            if(py>0 && py<h){
+
+                if(!started){
+                    ctx.moveTo(px,py);
+                    started=true;
+                }else{
+                    ctx.lineTo(px,py);
+                }
+            }else{
+                started=false;
+            }
+
+        }catch(e){
+            started=false;
+        }
+    }
+
+    ctx.stroke();
+}
+
+/* KEYBOARD */
+
+document.addEventListener("keydown",e=>{
+
+    if(/[0-9]/.test(e.key))
+        insert(e.key);
+
+    else if("+-*/().".includes(e.key))
+        insert(e.key);
+
+    else if(e.key==="Enter")
+        calculate();
+
+    else if(e.key==="Backspace")
+        back();
+
+    else if(e.key==="Escape")
+        clearCalc();
+
+});
+
+</script>
+
+</body>
+</html>
